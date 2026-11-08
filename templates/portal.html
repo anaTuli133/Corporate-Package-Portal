@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corporate Subscriber & Revenue Analytics Portal</title>
+<link rel="shortcut icon" href="{{ url_for('static', filename='teletalk.png') }}" type="image/png" />
+<style>
+  :root{
+    --brand:#71bd44; --brand-d:#5aa132; --brand-dd:#3f7a22;
+    --bg:#f3f8ef; --card:#ffffff; --ink:#18221a; --muted:#6b7a6e; --line:#e3ebde;
+    --field:#fbfdf9; --thead:#f1f8ea; --hover:#f6fbf1; --danger:#d64545; --radius:18px;
+    --bar:rgba(113,189,68,.16); --glow1:#d9f3c8; --glow2:#e6f7da;
+    --shadow:0 1px 2px rgba(20,40,20,.05),0 10px 30px rgba(20,60,20,.07);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;color:var(--ink);min-height:100vh;transition:background .25s,color .25s;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:radial-gradient(900px 420px at 100% -10%,var(--glow1) 0%,transparent 60%),
+               radial-gradient(700px 420px at -10% 0%,var(--glow2) 0%,transparent 60%),var(--bg);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:24px 20px 70px}
+
+  .header{display:flex;align-items:center;gap:16px;padding:16px 22px;background:var(--card);border-radius:var(--radius);
+    box-shadow:var(--shadow);border:1px solid var(--line);margin-bottom:20px;position:relative;overflow:hidden}
+  .header::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--brand),var(--brand-dd))}
+  .header img{height:46px;background:#fff;border-radius:10px;padding:4px}
+  .header h1{margin:0;font-size:22px;letter-spacing:-.2px}
+  .header p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+  .header .sp{flex:1}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--line);padding:22px}
+
+  .grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  select,input[type=date],input[type=text]{
+    width:100%;padding:12px 14px;font-size:15px;color:var(--ink);background:var(--field);
+    border:1.5px solid var(--line);border-radius:12px;outline:none;transition:.15s;font-family:inherit}
+  select:focus,input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(113,189,68,.2)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .row .lbl{font-size:12px;color:var(--muted);margin-right:2px;min-width:52px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:999px;font-size:12.5px;cursor:pointer;transition:.15s;font-family:inherit}
+  .chip:hover{border-color:var(--brand);color:var(--brand);background:var(--hover)}
+  .chip.hist{font-size:12px}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
+
+  button{font-family:inherit;cursor:pointer;border:none;transition:.15s}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-size:15px;font-weight:600}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;box-shadow:0 6px 16px rgba(90,161,50,.35)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(90,161,50,.42)}
+  .btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
+  .btn-ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+  .btn-danger:hover{border-color:var(--danger)!important;color:var(--danger)!important}
+  .btn-dl{background:#18221a;color:#fff;border:1.5px solid #18221a}
+  .btn-dl:hover{filter:brightness(1.2)}
+  .btn.sm{padding:9px 16px;font-size:14px}
+
+  .err{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;background:#fdecec;color:#a02a2a;font-size:14px;border:1px solid #f6c8c8}
+
+  #results{display:none;margin-top:20px;animation:rise .35s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:var(--bar)}
+  .stat small{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .stat b{display:block;font-size:27px;margin-top:4px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .stat b.green{color:var(--brand)}
+  .stat em{font-style:normal;font-size:12px;color:var(--muted)}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .badge.live{background:#e3f5d8;color:#3f7a22}.badge.cached{background:#fff2d6;color:#9a6b00}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}}
+  .card h3{margin:0;font-size:15px}
+  .ch{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+  .bar{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;margin:9px 0;font-size:13px}
+  .bar .lb{font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .tr{height:10px;background:var(--hover);border-radius:99px;overflow:hidden}
+  .bar .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-dd));width:0;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .bar b{text-align:right;font-variant-numeric:tabular-nums}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar .sp{flex:1}
+  .toolbar input[type=text]{max-width:250px;padding:10px 14px}
+  .toolbar input[type=date]{width:auto;padding:9px 12px;font-size:13px}
+  .dgrp{display:flex;align-items:center;gap:8px}
+  .dgrp label{margin:0;font-size:12px;white-space:nowrap}
+  .toolbar select{width:auto;padding:10px 12px;font-size:13px}
+  .toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;margin:0;text-transform:none;letter-spacing:0;font-weight:500}
+  .toggle input{accent-color:var(--brand);width:16px;height:16px}
+
+  .tbl-wrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px}
+  th,td{padding:11px 16px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+  thead th{position:sticky;top:0;background:var(--thead);color:var(--brand);font-size:12px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;z-index:1}
+  thead th:hover{filter:brightness(.97)}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:hover{background:var(--hover)}
+  td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.3px}
+  td.rev{background:linear-gradient(90deg,transparent calc(100% - var(--w)),var(--bar) calc(100% - var(--w)))}
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:13.5px;color:var(--muted);flex-wrap:wrap;gap:10px}
+  .pager .btns{display:flex;gap:6px}
+  .pager button{background:var(--card);border:1.5px solid var(--line);padding:7px 14px;border-radius:10px;font-size:13px;color:var(--ink)}
+  .pager button:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+  .pager button:disabled{opacity:.4;cursor:default}
+  .empty{text-align:center;padding:50px 10px;color:var(--muted)}
+  .empty .big{font-size:42px}
+
+  #loading{display:none;margin-top:20px}
+  .load-head{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .spinner{width:34px;height:34px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--brand);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .load-head b{font-size:16px}.load-head small{display:block;color:var(--muted);font-size:13px}
+  .prog{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:10px}
+  .prog i{display:block;height:100%;width:30%;background:linear-gradient(90deg,var(--brand),var(--brand-dd));border-radius:99px;animation:slide 1.2s ease-in-out infinite}
+  @keyframes slide{0%{margin-left:-30%}100%{margin-left:100%}}
+  .sk{height:16px;border-radius:8px;background:linear-gradient(90deg,var(--hover) 25%,var(--line) 37%,var(--hover) 63%);background-size:400% 100%;animation:shimmer 1.3s ease infinite;margin:14px 0}
+  @keyframes shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
+  .sk:nth-child(3n){width:80%}.sk:nth-child(3n+1){width:92%}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:#18221a;color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <img src="{{ url_for('static', filename='teletalk.png') }}" alt="Teletalk" />
+    <div>
+      <h1>Corporate Subscriber &amp; Revenue Analytics Portal</h1>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label for="pkg">📦 Package Name</label>
+        <select id="pkg"><option value="ALL">All</option></select>
+      </div>
+      <div>
+        <label for="sd">Start Date</label>
+        <input type="date" id="sd" />
+      </div>
+      <div>
+        <label for="ed">End Date</label>
+        <input type="date" id="ed" />
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="lbl">Quick:</span>
+      <button class="chip" data-r="yesterday" type="button">Yesterday</button>
+      <button class="chip" data-r="7" type="button">Last 7 days</button>
+      <button class="chip" data-r="30" type="button">Last 30 days</button>
+      <button class="chip" data-r="month" type="button">This month</button>
+      <button class="chip" data-r="lastmonth" type="button">Last month</button>
+      <button class="chip" data-r="3m" type="button">Last 3 months</button>
+      <button class="chip" data-r="6m" type="button">Last 6 months</button>
+    </div>
+
+    <div class="row" id="histRow" style="display:none">
+      <span class="lbl">🕘 Recent:</span>
+      <span id="hist" style="display:contents"></span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="searchBtn" type="button">🔍 Search</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading" class="card">
+    <div class="load-head">
+      <div class="spinner"></div>
+      <div><b>Fetching data…</b><small id="loadTimer">Query is running · 0s</small></div>
+    </div>
+    <div class="prog"><i></i></div>
+    <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="stats">
+      <div class="stat"><small>👥 Unique Subscribers</small><b id="stCount">0</b><em id="stPkg"></em></div>
+      <div class="stat"><small>💰 Total Revenue (BDT)</small><b class="green" id="stRev">0</b><em>Selected range</em></div>
+      <div class="stat"><small>📈 Avg / Subscriber (BDT)</small><b id="stAvg">0</b><em id="stMax"></em></div>
+      <div class="stat"><small>📅 Date Range</small><b id="stRange" style="font-size:17px;margin-top:9px"></b><em><span id="stTime"></span><span class="badge" id="stBadge"></span></em></div>
+    </div>
+
+    <div class="two">
+      <div class="card"><div class="ch"><h3>🏆 Top 10 Subscribers by Revenue</h3></div><div id="topBars"></div></div>
+      <div class="card"><div class="ch"><h3 id="insTitle">📊 Insights</h3></div><div id="insBars"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn btn-dl sm" id="dlBtn" type="button">⬇️ Download CSV</button>
+        <button class="btn btn-dl sm" id="xlsBtn" type="button" title="Summary + data + Top 10 + charts in one Excel file (follows the revenue filter and search)">📊 Download Excel</button>
+        <button class="btn btn-ghost sm" id="copyBtn" type="button">📋 Copy MSISDNs</button>
+        <button class="btn btn-ghost sm" id="refreshBtn" type="button" title="Bypass the cache and fetch fresh data from the database">🔄 Refresh</button>
+        <button class="btn btn-ghost btn-danger sm" id="clearBtn" type="button">🧹 Clear Filter</button>
+        <div class="sp"></div>
+        <select id="pkgFilter" title="Show only one package" style="display:none"><option value="">All packages</option></select>
+        <select id="revFilter" title="Filter by revenue">
+          <option value="all">All revenue</option>
+          <option value="nonzero">Hide zero revenue</option>
+          <option value="zero">Only zero revenue</option>
+        </select>
+        <select id="pageSize" title="Rows per page">
+          <option value="50">50 / page</option><option value="100" selected>100 / page</option>
+          <option value="250">250 / page</option><option value="500">500 / page</option>
+        </select>
+        <div class="dgrp"><label for="dq">📅 Search date</label><input type="date" id="dq" title="Show only this date (from the loaded range)" /></div>
+        <input type="text" id="q" placeholder="🔎 Search MSISDN or package…" />
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-k="0">Package ⇅</th>
+              <th data-k="1">Date ⇅</th>
+              <th data-k="2">MSISDN ⇅</th>
+              <th data-k="3" class="num">Total Revenue (BDT) ⇅</th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+        <div class="empty" id="empty" style="display:none"><div class="big">📭</div>No data found for this selection</div>
+      </div>
+
+      <div class="pager">
+        <span id="pgInfo"></span>
+        <div class="btns">
+          <button id="first" type="button">⏮</button>
+          <button id="prev" type="button">← Prev</button>
+          <button id="next" type="button">Next →</button>
+          <button id="last" type="button">⏭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let PAGE = 100;
+let ALL = [], VIEW = [], page = 0, sortK = null, sortAsc = true, ctrl = null, timer = null, meta = {}, maxRev = 1;
+
+const fmt = n => Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const _now=new Date();
+const YESTERDAY=iso(new Date(_now.getFullYear(),_now.getMonth(),_now.getDate()-1));   // today's data is not available yet
+const fmtD = s => s ? s.slice(8,10)+'-'+s.slice(5,7)+'-'+s.slice(0,4) : '';   // YYYY-MM-DD -> DD-MM-YYYY
+const showErr = m => { const e=$('err'); e.textContent=m; e.style.display=m?'block':'none'; };
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ---------- count-up ---------- */
+function countUp(el, to, dec){
+  const t0=performance.now(), dur=600;
+  (function step(t){
+    const p=Math.min(1,(t-t0)/dur), v=to*(1-Math.pow(1-p,3));
+    el.textContent = Number(v).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ---------- package dropdown + restore last filters ---------- */
+const last = store.get('cp_last', null);
+$('sd').max=$('ed').max=YESTERDAY;
+if(last){ $('ed').value=(last.ed&&last.ed>YESTERDAY)?YESTERDAY:(last.ed||''); $('sd').value=(last.sd&&last.sd>$('ed').value)?$('ed').value:(last.sd||''); }
+fetch('/api/packages').then(r=>r.json()).then(j=>{
+  if(!j.ok) return showErr('Could not load package list: '+j.error);
+  const s=$('pkg');
+  j.packages.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; s.appendChild(o); });
+  if(last && last.pkg) s.value=last.pkg;
+}).catch(()=>showErr('Could not load package list'));
+
+/* ---------- quick dates ---------- */
+function setRange(r){
+  // today's data is loaded tomorrow, so the ranges below always end yesterday (or earlier)
+  const t=new Date(), y=new Date(t.getFullYear(),t.getMonth(),t.getDate()-1);
+  let a=new Date(y), b=new Date(y);
+  if(r==='7') a.setDate(y.getDate()-6);
+  if(r==='30') a.setDate(y.getDate()-29);
+  if(r==='month'){ a=new Date(t.getFullYear(),t.getMonth(),1); if(a>y) return toast('No completed day in this month yet'); }
+  if(r==='lastmonth'){ a=new Date(t.getFullYear(),t.getMonth()-1,1); b=new Date(t.getFullYear(),t.getMonth(),0); }
+  if(r==='3m'){ a=new Date(t.getFullYear(),t.getMonth()-3,1); b=new Date(t.getFullYear(),t.getMonth(),0); }
+  if(r==='6m'){ a=new Date(t.getFullYear(),t.getMonth()-6,1); b=new Date(t.getFullYear(),t.getMonth(),0); }
+  $('sd').value=iso(a); $('ed').value=iso(b);
+}
+document.querySelectorAll('.chip[data-r]').forEach(c=>c.onclick=()=>setRange(c.dataset.r));
+
+/* ---------- recent searches ---------- */
+function renderHist(){
+  const h=store.get('cp_hist',[]);
+  $('histRow').style.display=h.length?'flex':'none';
+  $('hist').innerHTML=h.map((x,i)=>`<button class="chip hist" data-i="${i}" type="button">${esc(x.pkg==='ALL'?'All':x.pkg)} · ${fmtD(x.sd)} → ${fmtD(x.ed)}</button>`).join('');
+  $('hist').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const x=h[+b.dataset.i]; const e=x.ed>YESTERDAY?YESTERDAY:x.ed, st=x.sd>e?e:x.sd;
+    $('pkg').value=x.pkg; $('sd').value=st; $('ed').value=e; search(false);
+  });
+}
+function pushHist(x){
+  const h=store.get('cp_hist',[]).filter(y=>!(y.pkg===x.pkg&&y.sd===x.sd&&y.ed===x.ed));
+  h.unshift(x); store.set('cp_hist',h.slice(0,5)); renderHist();
+}
+renderHist();
+
+/* ---------- search ---------- */
+async function search(refresh){
+  showErr('');
+  const sd=$('sd').value, ed=$('ed').value, pkg=$('pkg').value;
+  if(!sd||!ed) return showErr('Please select both Start Date and End Date');
+  if(sd>ed)   return showErr('Start Date cannot be after End Date');
+  if(ed>YESTERDAY) return showErr("Today's data is not available yet. Please select an End Date up to yesterday ("+fmtD(YESTERDAY)+")");
+
+  if(ctrl) ctrl.abort();
+  ctrl = new AbortController();
+  $('results').style.display='none';
+  $('loading').style.display='block';
+  $('searchBtn').disabled=true; $('searchBtn').textContent='⏳ Searching…';
+  const t0=Date.now();
+  clearInterval(timer);
+  timer=setInterval(()=>{ $('loadTimer').textContent='Query is running · '+Math.floor((Date.now()-t0)/1000)+'s'; },500);
+
+  try{
+    const r=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({package:pkg,start_date:sd,end_date:ed,refresh:!!refresh}),signal:ctrl.signal});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||'Unknown error');
+    const hit = r.headers.get('X-Cache')==='HIT';
+    ALL=j.rows; maxRev=ALL.reduce((m,r)=>r[3]>m?r[3]:m,1e-9);
+    computeSubs();
+    const n=SUBS.length, topSub=SUBS.reduce((m,x)=>x[2]>m?x[2]:m,0);
+    meta={pkg,sd,ed,total:j.total_revenue,count:n};
+    store.set('cp_last',{pkg,sd,ed}); pushHist({pkg,sd,ed});
+
+    countUp($('stCount'),n,0);
+    countUp($('stRev'),j.total_revenue,2);
+    countUp($('stAvg'),n?j.total_revenue/n:0,2);
+    $('stPkg').textContent=(pkg==='ALL'?'All corporate packages':pkg)+' · '+j.count.toLocaleString()+' day-wise rows';
+    $('stMax').textContent=n?('Highest: '+fmt(topSub)):'';
+    $('stRange').textContent=fmtD(sd)+'  →  '+fmtD(ed);
+    if(hit){
+      $('stTime').textContent='Updated '+j.generated_at;
+      $('stBadge').textContent='⚡ cached'; $('stBadge').className='badge cached';
+    }else{
+      $('stTime').textContent='Fetched in '+j.seconds+'s';
+      $('stBadge').textContent='● live'; $('stBadge').className='badge live';
+    }
+    $('q').value=''; $('revFilter').value='all'; $('dq').value=''; $('dq').min=sd; $('dq').max=ed; sortK=null;
+    fillPkgFilter();
+    renderInsights(); applyView();
+    $('results').style.display='block';
+    $('results').scrollIntoView({behavior:'smooth',block:'start'});
+    requestAnimationFrame(()=>document.querySelectorAll('.bar .tr i').forEach(i=>i.style.width=i.dataset.w+'%'));
+  }catch(e){
+    if(e.name!=='AbortError') showErr('❌ '+e.message);
+  }finally{
+    clearInterval(timer);
+    $('loading').style.display='none';
+    $('searchBtn').disabled=false; $('searchBtn').textContent='🔍 Search';
+  }
+}
+$('searchBtn').onclick=()=>search(false);
+$('refreshBtn').onclick=()=>search(true);
+
+/* ---------- insights ---------- */
+function bars(items){ // [label, value, text]
+  const m=Math.max(1e-9,...items.map(i=>i[1]));
+  return items.map(i=>`<div class="bar"><span class="lb" title="${esc(i[0])}">${esc(i[0])}</span><div class="tr"><i data-w="${(i[1]/m*100).toFixed(1)}"></i></div><b>${i[2]}</b></div>`).join('')
+    || '<div class="empty" style="padding:20px">No data</div>';
+}
+/* One entry per subscriber (package + MSISDN) with the total revenue over the whole range */
+let SUBS=[];
+function computeSubs(){
+  const m=new Map();
+  for(const r of ALL){
+    const k=r[0]+'|'+r[2], e=m.get(k);
+    if(e) e[2]+=r[3]; else m.set(k,[r[0],r[2],r[3]]);
+  }
+  SUBS=Array.from(m.values());
+}
+function renderInsights(){
+  const top=SUBS.slice().sort((a,b)=>b[2]-a[2]).slice(0,10);
+  $('topBars').innerHTML=bars(top.map(r=>[r[1],r[2],fmt(r[2])]));
+
+  if(meta.pkg==='ALL'){
+    $('insTitle').textContent='📦 Revenue by Package';
+    const g={}; SUBS.forEach(r=>{ (g[r[0]]=g[r[0]]||{c:0,r:0}); g[r[0]].c++; g[r[0]].r+=r[2]; });
+    const items=Object.entries(g).sort((a,b)=>b[1].r-a[1].r).slice(0,8)
+      .map(([k,v])=>[k,v.r,fmt(v.r)+' <span style="color:var(--muted);font-weight:400">('+v.c+')</span>']);
+    $('insBars').innerHTML=bars(items);
+  }else{
+    $('insTitle').textContent='📊 Revenue Distribution (subscribers)';
+    const B=[['0',0],['0 – 1',0],['1 – 10',0],['10 – 100',0],['100 – 1000',0],['1000+',0]];
+    SUBS.forEach(r=>{ const v=r[2]; B[ v<=0?0 : v<1?1 : v<10?2 : v<100?3 : v<1000?4 : 5 ][1]++; });
+    $('insBars').innerHTML=bars(B.map(b=>[b[0]+' BDT',b[1],b[1].toLocaleString()]));
+  }
+}
+
+/* ---------- package filter (only when 'All' was searched and the result has more than one package) ---------- */
+function fillPkgFilter(){
+  const sel=$('pkgFilter'), names=[...new Set(ALL.map(r=>r[0]))].sort();
+  sel.innerHTML='<option value="">All packages ('+names.length+')</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  sel.value='';
+  sel.style.display=(meta.pkg==='ALL' && names.length>1)?'':'none';
+}
+
+/* ---------- table ---------- */
+function applyView(){
+  const q=$('q').value.trim().toLowerCase(), rf=$('revFilter').value, dq=$('dq').value, pf=$('pkgFilter').value;
+  VIEW = ALL.filter(r=>(!q||r[2].includes(q)||r[0].toLowerCase().includes(q)) && (!pf||r[0]===pf) && (!dq||r[1]===dq) && (rf==='all'||(rf==='nonzero'?r[3]>0:r[3]<=0)));
+  if(sortK!==null){
+    VIEW.sort((a,b)=>{ const x=a[sortK], y=b[sortK];
+      const c = typeof x==='number' ? x-y : String(x).localeCompare(String(y));
+      return sortAsc?c:-c; });
+  }
+  page=0; render();
+}
+function render(){
+  const start=page*PAGE, rows=VIEW.slice(start,start+PAGE);
+  $('tb').innerHTML = rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="mono">${esc(fmtD(r[1]))}</td><td class="mono">${esc(r[2])}</td><td class="num rev" style="--w:${Math.min(100,r[3]/maxRev*100).toFixed(1)}%">${fmt(r[3])}</td></tr>`).join('');
+  $('empty').style.display = VIEW.length ? 'none':'block';
+  const end=Math.min(start+PAGE,VIEW.length), pages=Math.max(1,Math.ceil(VIEW.length/PAGE));
+  $('pgInfo').textContent = VIEW.length ? `Showing ${(start+1).toLocaleString()}–${end.toLocaleString()} of ${VIEW.length.toLocaleString()} rows · Page ${page+1}/${pages}` : '';
+  $('first').disabled=$('prev').disabled = page===0;
+  $('last').disabled=$('next').disabled = end>=VIEW.length;
+  $('dlBtn').textContent = `⬇️ Download CSV (${VIEW.length.toLocaleString()} rows)`;
+}
+const go=p=>{page=p;render();$('tb').scrollIntoView({block:'nearest'})};
+$('first').onclick=()=>go(0);
+$('prev').onclick=()=>go(page-1);
+$('next').onclick=()=>go(page+1);
+$('last').onclick=()=>go(Math.ceil(VIEW.length/PAGE)-1);
+$('pageSize').onchange=e=>{PAGE=+e.target.value;page=0;render()};
+$('revFilter').onchange=applyView;
+$('pkgFilter').onchange=applyView;
+$('dq').onchange=applyView;
+let qt; $('q').oninput=()=>{clearTimeout(qt);qt=setTimeout(applyView,200)};
+document.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+  const k=+th.dataset.k; sortAsc = (sortK===k) ? !sortAsc : (k===3?false:true); sortK=k; applyView();
+});
+
+/* ---------- CSV (current view: follows filter/sort) ---------- */
+function saveCsv(fname, head, rows){
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[head.map(q).join(',')].concat(rows.map(r=>r.map(q).join(',')));
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('✅ CSV downloaded');
+}
+/* File name, e.g. Corporate_Sec_Prepaid_3G_01-11-2026_to_05-11-2026.xlsx
+   If one date is searched the file name has only that date: Corporate_Sec_Prepaid_3G_04-11-2026.xlsx */
+function fileBase(){
+  const pn=$('pkgFilter').value||meta.pkg;
+  const pk=(pn==='ALL'?'All_Corporate_Packages':pn).replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'');
+  const dq=$('dq').value;
+  const when=dq?fmtD(dq):(meta.sd===meta.ed?fmtD(meta.sd):fmtD(meta.sd)+'_to_'+fmtD(meta.ed));
+  const rf={nonzero:'_Non_Zero_Revenue',zero:'_Zero_Revenue'}[$('revFilter').value]||'';
+  return pk+'_'+when+rf+($('q').value.trim()?'_Filtered':'');
+}
+/* ---------- Excel: summary + full data + charts (built on the server from cache) ---------- */
+$('xlsBtn').onclick=async()=>{
+  const btn=$('xlsBtn'), old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ Preparing Excel…';
+  try{
+    const qs=new URLSearchParams({package:meta.pkg,start_date:meta.sd,end_date:meta.ed,rev:$('revFilter').value,q:$('q').value.trim(),d:$('dq').value,pk:$('pkgFilter').value});
+    const r=await fetch('/api/export?'+qs);
+    if(!r.ok){ let m='Export failed'; try{ m=(await r.json()).error||m; }catch(e){} throw new Error(m); }
+    const blob=await r.blob();
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=fileBase()+'.xlsx';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    toast('✅ Excel downloaded');
+  }catch(e){ toast('❌ '+e.message); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+};
+$('dlBtn').onclick=()=>saveCsv(fileBase()+'.csv',['Package','Date','MSISDN','Total Revenue (BDT)'],VIEW.map(r=>[r[0],fmtD(r[1]),r[2],r[3].toFixed(2)]));
+
+/* ---------- copy msisdns ---------- */
+$('copyBtn').onclick=()=>{
+  const uniq=[...new Set(VIEW.map(r=>r[2]))];
+  const text=uniq.join('\n');
+  const done=()=>toast('📋 '+uniq.length.toLocaleString()+' unique MSISDN copied');
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done); return; }
+  const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');done();}catch(e){toast('Copy failed');} ta.remove();
+};
+
+/* ---------- clear ---------- */
+$('clearBtn').onclick=()=>{
+  if(ctrl) ctrl.abort();
+  ALL=[];VIEW=[]; $('tb').innerHTML='';
+  $('pkg').value='ALL'; $('sd').value=''; $('ed').value=''; $('q').value=''; $('revFilter').value='all'; $('dq').value=''; $('pkgFilter').value='';
+  $('results').style.display='none'; showErr('');
+  store.set('cp_last',null);
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+</script>
+</body>
+</html>
