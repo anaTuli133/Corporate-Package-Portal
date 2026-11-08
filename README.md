@@ -23,7 +23,7 @@ Pick a package 📦, choose a date range 📅, hit **Search** 🔍, then filter,
 
 ---
 
-## 🖼️ Screenshots
+## 🖼️ Overview
 
 
 | 🔍 Search Panel | 📦 Package Dropdown |
