@@ -115,20 +115,6 @@ Corporate_Portal_V2/
 - Network access to the Oracle DWH
 - Read access to `subscriber_usage_analysis`, `offer_dim` and `date_dim`
 
-### 💻 Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/<your-org>/Corporate_Portal_V2.git
-cd Corporate_Portal_V2
-
-# 2. (Optional) create a virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-```
 
 ### ⚙️ Configuration
 
@@ -143,23 +129,6 @@ All settings are read from environment variables:
 | `CACHE_TTL` | Result cache lifetime in seconds | `300` |
 | `CACHE_MAX` | Max cached searches | `30` |
 | `MAX_ROWS` | Max rows allowed per search | `1000000` |
-
-```bash
-export DB_USER_203="your_user"
-export DB_PASS_203="your_password"
-export DB_SVC_203="host:1521/service_name"
-```
-
-> 🔐 **Never commit credentials.** Keep them in environment variables or a local `.env` file (already in `.gitignore`).
-
-### ▶️ Run
-
-```bash
-python app.py
-```
-
-Open **http://localhost:5005** in your browser 🌐
-
 ---
 
 ## 🔌 API Reference
@@ -209,6 +178,6 @@ MSISDNs are normalised to the `880XXXXXXXXXX` format 📱.
 
 <div align="center">
 
-💚 Built with care for the Teletalk BI & Data Platform team.
+💚 Built for the Teletalk BI & Data Platform team.
 
 </div>
